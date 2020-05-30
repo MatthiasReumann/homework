@@ -1,7 +1,6 @@
 package main
 
-import "fmt"
-
 func main(){
-	fmt.Println("hello");
+	srv := NewServer("8080")
+	srv.Serve()
 }
