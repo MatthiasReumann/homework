@@ -1,12 +1,16 @@
 package main
 
 import (
-	"encoding/json"
-	uuid2 "github.com/google/uuid"
-	"io/ioutil"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
+)
+
+const (
+	HEStatusUnsubmitted = "Unsubmitted"
+	HEStatusSubmitted = "Submitted"
+	HEStatusCorrected= "Corrected"
 )
 
 type server struct{
@@ -17,82 +21,38 @@ type HELink struct{
 	HELinkUuid string
 }
 
+type Student struct{
+	Firstname string
+	Lastname string
+}
+
+type File struct{
+	Text string
+}
+
 type HE struct{
 	HELinkUuid string
 	HeUuid string
+	Student Student
+	File File
+	Status string
 }
 
-
-
 func NewServer(port string) server{
+	r := mux.NewRouter()
+	r.HandleFunc("/links", Links)
+	r.HandleFunc("/homeworks", Homeworks)
+	r.HandleFunc("/homeworks/{uuid}", HomeworksUUID)
+
 	srv := &http.Server{
 		Addr:           ":"+port,
+		Handler:		r,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	http.HandleFunc("/links", Links)
-	http.HandleFunc("/homeworks", Homeworks)
-
 	return server{srv}
-}
-
-func Homeworks(w http.ResponseWriter, r *http.Request){
-	switch r.Method{
-		case http.MethodPost:
-			var helink HELink
-
-			body, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Printf("Error reading body: %v", err)
-				http.Error(w, "can't read body", http.StatusBadRequest)
-				return
-			}
-
-			err = json.Unmarshal(body, &helink)
-			if err != nil{
-				log.Print(err)
-				http.Error(w, "Can't unmarshal data", http.StatusBadRequest)
-			}
-
-			uuid, err := uuid2.NewUUID()
-			if err != nil{
-				log.Fatal(err)
-			}
-
-			//TODO: check if helink is in db
-
-			data := HE{helink.HELinkUuid, uuid.String()}
-
-			//TODO: add HE to database
-
-			json, err := json.Marshal(data)
-
-			w.Write(json)
-		default:
-			w.Write([]byte("orsch"))
-	}
-}
-
-func Links(w http.ResponseWriter, r *http.Request) {
-	switch r.Method{
-		case http.MethodPost:
-			uuid, err := uuid2.NewUUID()
-			if err != nil{
-				log.Fatal(err)
-			}
-
-			data := HELink{uuid.String()}
-
-			//TODO:: Add helink to database
-
-			json, err := json.Marshal(data)
-
-			w.Write(json)
-	default:
-			w.Write([]byte("orsch"))
-	}
 }
 
 func (s *server) Serve(){
