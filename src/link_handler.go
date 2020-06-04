@@ -11,7 +11,7 @@ type HELink struct {
 	HELinkUuid string
 }
 
-func Links(w http.ResponseWriter, r *http.Request) {
+func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		uuid, err := uuid2.NewUUID()
@@ -34,6 +34,6 @@ func Links(w http.ResponseWriter, r *http.Request) {
 	case http.MethodOptions:
 		w.WriteHeader(http.StatusOK);
 	default:
-		MethodNotAllowed(w)
+		s.MethodNotAllowed(w)
 	}
 }

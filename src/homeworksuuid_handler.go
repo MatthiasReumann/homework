@@ -8,23 +8,23 @@ import (
 	"net/http"
 )
 
-func HomeworksUUID(w http.ResponseWriter, r *http.Request) {
+func (s *server) HomeworksUUID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		homeworkuuid_get(w, r)
+		s.homeworkuuid_get(w, r)
 		return
 	case http.MethodPut:
-		homeworkuuid_put(w, r)
+		s.homeworkuuid_put(w, r)
 		return
 	case http.MethodOptions:
 		w.WriteHeader(http.StatusOK);
 		return
 	default:
-		MethodNotAllowed(w)
+		s.MethodNotAllowed(w)
 	}
 }
 
-func homeworkuuid_get(w http.ResponseWriter, r *http.Request){
+func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
 	heuuid := vars["uuid"]
 	log.Print(heuuid)
@@ -46,7 +46,7 @@ func homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 	w.Write(res)
 }
 
-func homeworkuuid_put(w http.ResponseWriter, r *http.Request){
+func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
 	heuuid := vars["uuid"]
 

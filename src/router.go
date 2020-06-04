@@ -8,11 +8,11 @@ import (
 )
 
 
-func NewRouter() http.Handler{
+func (s *server) NewRouter() http.Handler{
 	r := mux.NewRouter()
-	r.HandleFunc("/links", Links)
-	r.HandleFunc("/homeworks", Homeworks)
-	r.HandleFunc("/homeworks/{uuid}", HomeworksUUID)
+	r.HandleFunc("/links", s.Links)
+	r.HandleFunc("/homeworks", s.Homeworks)
+	r.HandleFunc("/homeworks/{uuid}", s.HomeworksUUID)
 
 	r.Use(log_request)
 

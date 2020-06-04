@@ -31,21 +31,21 @@ type HE struct {
 	Status     string
 }
 
-func Homeworks(w http.ResponseWriter, r *http.Request) {
+func (s *server) Homeworks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		homeworks_post(w, r)
+		s.homeworks_post(w, r)
 		return
 	case http.MethodOptions:
 		w.WriteHeader(http.StatusOK)
 		return
 	default:
-		MethodNotAllowed(w)
+		s.MethodNotAllowed(w)
 		return
 	}
 }
 
-func homeworks_post(w http.ResponseWriter, r *http.Request){
+func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request){
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
