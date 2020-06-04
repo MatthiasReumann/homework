@@ -40,9 +40,9 @@ type HE struct{
 
 func NewServer(port string) server{
 	r := mux.NewRouter()
-	r.HandleFunc("/links", Links)
-	r.HandleFunc("/homeworks", Homeworks)
-	r.HandleFunc("/homeworks/{uuid}", HomeworksUUID)
+	r.HandleFunc("/links", Links).Methods("POST","OPTIONS")
+	r.HandleFunc("/homeworks", Homeworks).Methods("POST","OPTIONS")
+	r.HandleFunc("/homeworks/{uuid}", HomeworksUUID).Methods("PUT","GET","OPTIONS")
 
 	srv := &http.Server{
 		Addr:           ":"+port,

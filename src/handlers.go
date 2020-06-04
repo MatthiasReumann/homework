@@ -9,25 +9,26 @@ import (
 	"net/http"
 )
 
-type homework_request struct{
+type homework_request struct {
 	HELinkUuid string
-	Firstname string
-	Lastname string
+	Firstname  string
+	Lastname   string
 }
 
-type homeworkuuid_request struct{
+type homeworkuuid_request struct {
 	Text string
 }
 
-func MethodNotAllowed(w http.ResponseWriter){
-	http.Error(w,"Method Not Allowed", http.StatusMethodNotAllowed)
+func MethodNotAllowed(w http.ResponseWriter) {
+	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 }
 
 func Links(w http.ResponseWriter, r *http.Request) {
-	switch r.Method{
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	switch r.Method {
 	case http.MethodPost:
 		uuid, err := uuid2.NewUUID()
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
 
@@ -36,20 +37,24 @@ func Links(w http.ResponseWriter, r *http.Request) {
 		//TODO:: Add helink to database
 
 		res, err := json.Marshal(data)
-		if err != nil{
+		if err != nil {
 			log.Printf("Error while marshalling: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		w.Write(res)
+	case http.MethodOptions:
+		w.WriteHeader(200);
 	default:
 		MethodNotAllowed(w)
 	}
 }
 
 func Homeworks(w http.ResponseWriter, r *http.Request) {
-	switch r.Method{
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+	switch r.Method {
 	case http.MethodPost:
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -61,7 +66,7 @@ func Homeworks(w http.ResponseWriter, r *http.Request) {
 		var request homework_request
 
 		err = json.Unmarshal(body, &request)
-		if err != nil{
+		if err != nil {
 			log.Printf("Error Unmarshal body: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -69,7 +74,7 @@ func Homeworks(w http.ResponseWriter, r *http.Request) {
 		//TODO: Check if helink-uuid is in database
 
 		heuuid, err := uuid2.NewUUID()
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
 
@@ -79,28 +84,32 @@ func Homeworks(w http.ResponseWriter, r *http.Request) {
 			Student{
 				request.Firstname,
 				request.Lastname},
-					File{
-						"", //TODO: Move to own constants file
-					},
-					HEStatusUnsubmitted}
+			File{
+				"", //TODO: Move to own constants file
+			},
+			HEStatusUnsubmitted}
 
 		//TODO: Add HE to database
 
 		res, err := json.Marshal(data)
-		if err != nil{
+		if err != nil {
 			log.Printf("Error while marshalling: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		w.Write(res)
+	case http.MethodOptions:
+		w.WriteHeader(200);
 	default:
 		MethodNotAllowed(w)
 	}
 }
 
 func HomeworksUUID(w http.ResponseWriter, r *http.Request) {
-	switch r.Method{
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+	switch r.Method {
 	case http.MethodGet:
 		vars := mux.Vars(r)
 		heuuid := vars["uuid"]
@@ -115,7 +124,7 @@ func HomeworksUUID(w http.ResponseWriter, r *http.Request) {
 		}
 
 		res, err := json.Marshal(file)
-		if err != nil{
+		if err != nil {
 			log.Printf("Error while marshalling: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -138,7 +147,7 @@ func HomeworksUUID(w http.ResponseWriter, r *http.Request) {
 		var request homeworkuuid_request
 
 		err = json.Unmarshal(body, &request)
-		if err != nil{
+		if err != nil {
 			log.Printf("Error Unmarshal body: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}

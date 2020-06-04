@@ -1,6 +1,6 @@
 package main
 
 func main(){
-	srv := NewServer("8080")
+	srv := NewServer("3333")
 	srv.Serve()
 }
