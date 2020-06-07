@@ -11,6 +11,7 @@ import (
 func (s *server) NewRouter() http.Handler{
 	r := mux.NewRouter()
 	r.HandleFunc("/links", s.Links)
+	r.HandleFunc("/links/{uuid}", s.LinksUUID)
 	r.HandleFunc("/homeworks", s.Homeworks)
 	r.HandleFunc("/homeworks/{uuid}", s.HomeworksUUID)
 

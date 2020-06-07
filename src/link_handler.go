@@ -3,12 +3,18 @@ package main
 import (
 	"encoding/json"
 	uuid2 "github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
 type HELink struct {
 	HELinkUuid string
+}
+
+type HEList struct{
+	HELinkUuid string
+	Homeexercises []string
 }
 
 func (s *server) Links(w http.ResponseWriter, r *http.Request) {
@@ -37,3 +43,32 @@ func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 		s.MethodNotAllowed(w)
 	}
 }
+
+func (s *server) LinksUUID(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		log.Print(uuid)
+
+		//TODO: Get all homework uuids via link
+
+		helist := []string{"1","3","3"}
+
+		data := HEList{uuid, helist}
+
+		res, err := json.Marshal(data)
+		if err != nil {
+			log.Printf("Error while marshalling: %v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Write(res)
+	case http.MethodOptions:
+		w.WriteHeader(http.StatusOK);
+	default:
+		s.MethodNotAllowed(w)
+	}
+}
+

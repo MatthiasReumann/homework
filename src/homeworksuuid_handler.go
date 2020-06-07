@@ -33,6 +33,7 @@ func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 
 	file := File{
 		"text text",
+		HEStatusUnsubmitted,
 	}
 
 	res, err := json.Marshal(file)
@@ -42,7 +43,6 @@ func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }
 
@@ -59,9 +59,7 @@ func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	req := struct {
-		Text string
-	}{}
+	var req File
 
 	err = json.Unmarshal(body, &req)
 	if err != nil {

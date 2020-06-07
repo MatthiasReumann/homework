@@ -12,6 +12,7 @@ const (
 	HEStatusUnsubmitted = "Unsubmitted"
 	HEStatusSubmitted   = "Submitted"
 	HEStatusCorrected   = "Corrected"
+	EmptyString         = ""
 )
 
 type Student struct {
@@ -20,7 +21,8 @@ type Student struct {
 }
 
 type File struct {
-	Text string
+	Text   string
+	Status string
 }
 
 type HE struct {
@@ -28,7 +30,6 @@ type HE struct {
 	HeUuid     string
 	Student    Student
 	File       File
-	Status     string
 }
 
 func (s *server) Homeworks(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +46,7 @@ func (s *server) Homeworks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request){
+func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
@@ -82,9 +83,8 @@ func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request){
 			req.Firstname,
 			req.Lastname},
 		File{
-			"", //TODO: Move to own constants file
-		},
-		HEStatusUnsubmitted}
+			EmptyString,
+			HEStatusUnsubmitted}}
 
 	//TODO: Add HE to database
 
