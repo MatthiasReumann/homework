@@ -29,11 +29,30 @@ func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 	heuuid := vars["uuid"]
 	log.Print(heuuid)
 
-	//TODO: check if heuuid is in db  //TODO: load text from dataabase
+	//check if he exists
+	indb,err := env.db.ExistsHe(heuuid)
+	if !indb {
+		log.Printf("HE does not exists: %v", heuuid)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	//get file
+	text,_ := env.db.GetFile(heuuid)
 	file := File{
-		"text text",
+		text,
 		HEStatusUnsubmitted,
+	}
+
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	res, err := json.Marshal(file)
@@ -50,7 +69,18 @@ func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
 	heuuid := vars["uuid"]
 
-	//TODO: check if heuuid is in db
+	//check if he exists
+	indb,err := env.db.ExistsHe(heuuid)
+	if !indb {
+		log.Printf("HE does not exists: %v", heuuid)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -68,7 +98,18 @@ func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	//TODO: update text via heuuid
+	//check if file exists
+	err = env.db.SetFile(heuuid, req.Text)
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	log.Printf("updated %s", heuuid)
 
