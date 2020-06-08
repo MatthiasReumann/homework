@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
+	uuid2 "github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,11 +25,11 @@ type File struct {
 	Status string
 }
 
-type HE struct {
-	HELinkUuid string
-	HeUuid     string
-	Student    Student
-	File       File
+type Submission struct {
+	Uuid    string
+	Link    Link
+	Student Student
+	File    File
 }
 
 func (s *server) Homeworks(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +55,7 @@ func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := struct {
-		HELinkUuid string
+		Uuid string
 		Firstname  string
 		Lastname   string
 	}{}
@@ -69,16 +69,16 @@ func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request) {
 
 	//TODO: Check if helink-uuid is in database
 
-	heuuid, err := uuid.NewUUID()
+	uuid, err := uuid2.NewUUID()
 	if err != nil {
 		log.Printf("Error creating UUID: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	data := HE{
-		req.HELinkUuid,
-		heuuid.String(),
+	data := Submission{
+		uuid.String(),
+		Link{req.Uuid},
 		Student{
 			req.Firstname,
 			req.Lastname},

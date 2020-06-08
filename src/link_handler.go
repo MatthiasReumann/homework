@@ -8,13 +8,13 @@ import (
 	"net/http"
 )
 
-type HELink struct {
-	HELinkUuid string
+type Link struct {
+	Uuid string
 }
 
-type HEList struct{
-	HELinkUuid string
-	Homeexercises []string
+type List struct{
+	Link Link
+	Submissions []string
 }
 
 func (s *server) Links(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		data := HELink{uuid.String()}
+		data := Link{uuid.String()}
 
 		//TODO:: Add helink to database
 
@@ -55,7 +55,7 @@ func (s *server) LinksUUID(w http.ResponseWriter, r *http.Request) {
 
 		helist := []string{"1","3","3"}
 
-		data := HEList{uuid, helist}
+		data := List{Link{uuid}, helist}
 
 		res, err := json.Marshal(data)
 		if err != nil {
