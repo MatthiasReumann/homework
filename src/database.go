@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	//"fmt"
-	"log"
-
 	_ "github.com/lib/pq"
 )
 
@@ -14,45 +11,30 @@ type databaseConnection struct{
 	conn *sql.DB
 }
 
-const (
-	host     = "localhost"
-	port     = "54320"
-	user     = "dbuser"
-	password = "secret"
-	dbname   = "he"
-)
-
-func NewDatabaseConnection() databaseConnection {
-	//connStr := "host=localhost port=54320 user=dbuser dbname=he sslmode=disable"
-
-	connStr := fmt.Sprintf("host=%s port=%s user=%s "+
+func NewDatabaseConnection(host string, port int, user string, password string, dbname string) (databaseConnection, error) {
+	connStr := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {
-		log.Fatal(err)
+		return databaseConnection{}, err
 	}
 
 	err = db.Ping() // check connection
 	if err != nil {
-		panic(err)
+		return databaseConnection{}, err
 	}
 
-	log.Println("connected to DB!")
-	return databaseConnection{db}
+	return databaseConnection{db}, nil
 }
 
-func (db *databaseConnection) Close() {
-	err := db.conn.Close()
-
-	if err != nil {
-		log.Fatal(err)
-	}
+func (db *databaseConnection) Close() error { // func not necessary
+	return db.conn.Close()
 }
 
-func (db *databaseConnection) AddHe(he HE) {
+func (db *databaseConnection) AddHe(he HE) error {
 	sqlStatement := fmt.Sprintf(
 		"insert into HE (HELinkUuid, HeUuid, fname, lname, file, status)" +
 			" values ('%s','%s','%s','%s','%s','%s')", he.HELinkUuid, he.HeUuid, he.Student.Firstname, he.Student.Lastname,
@@ -60,75 +42,67 @@ func (db *databaseConnection) AddHe(he HE) {
 
 	_, err := db.conn.Exec(sqlStatement)
 
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func (db *databaseConnection) ExistsHe(heUuid string) bool {
-	sqlStatement := fmt.Sprintf("select HELinkUuid from HELink where HELinkUuid = '%s'", heUuid)
+func (db *databaseConnection) ExistsHe(heUuid string) (bool, error) {
+	sqlStatement := fmt.Sprintf("select heuuid from HE where heuuid = '%s'", heUuid)
 
 	row := db.conn.QueryRow(sqlStatement)
 
 	switch err := row.Scan(&heUuid); err {
 	case sql.ErrNoRows:
-		return false
+		return false, nil
 	case nil:
-		return true
+		return true, nil
 	default:
-		panic(err)
+		return false, err
 	}
 }
 
-func (db *databaseConnection) AddHelink(hl HELink) {
-	sqlStatement := fmt.Sprintf("insert into HELink (HELinkUuid) values ('%s')", hl.HELinkUuid)
+func (db *databaseConnection) AddHelink(helink string) error {
+	sqlStatement := fmt.Sprintf("insert into HELink (HELinkUuid) values ('%s')", helink)
 
 	_, err := db.conn.Exec(sqlStatement)
 
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func (db *databaseConnection) ExistsHelink(hl HELink) bool {
-	sqlStatement := fmt.Sprintf("select HELinkUuid from HELink where HELinkUuid = '%s'", hl.HELinkUuid)
+func (db *databaseConnection) ExistsHelink(helink string) (bool, error) {
+	sqlStatement := fmt.Sprintf("select HELinkUuid from HELink where HELinkUuid = '%s'", helink)
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&hl.HELinkUuid); err {
+	switch err := row.Scan(&helink); err {
 	case sql.ErrNoRows:
-		return false
+		return false, nil
 	case nil:
-		return true
+		return true, nil
 	default:
-		panic(err)
+		return false, nil
 	}
 }
 
-func (db *databaseConnection) GetFile(heUuid string) string {
+func (db *databaseConnection) GetFile(heUuid string) (string, error) {
 	var file string
 	sqlStatement := fmt.Sprintf("select file from HE where HeUuid = '%s'", heUuid)
 
 	row := db.conn.QueryRow(sqlStatement)
 
 	switch err := row.Scan(&file); err {
-	//case sql.ErrNoRows:
-	//	return false
 	case nil:
-		return file
+		return file, nil
 	default:
-		panic(err)
+		return "", err
 	}
 }
 
-func (db *databaseConnection) SetFile(heUuid string, file File) {
+func (db *databaseConnection) SetFile(heUuid string, text string) error {
 	sqlStatement := "UPDATE HE SET file = $2 WHERE heuuid = $1;"
 
-	_, err := db.conn.Exec(sqlStatement, heUuid, file.Text)
+	_, err := db.conn.Exec(sqlStatement, heUuid, text)
 
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
 

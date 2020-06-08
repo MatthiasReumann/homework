@@ -21,7 +21,13 @@ func Links(w http.ResponseWriter, r *http.Request) {
 
 		data := HELink{uuid.String()}
 
-		//TODO:: Add helink to database
+		// add link to db
+		err = env.db.AddHelink(data.HELinkUuid)
+		if err != nil {
+			log.Printf("Error: could not connect to db")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		res, err := json.Marshal(data)
 		if err != nil {

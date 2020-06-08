@@ -66,7 +66,18 @@ func homeworks_post(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	//TODO: Check if helink-uuid is in database
+	//check if helink in db
+	indb,err := env.db.ExistsHelink(req.HELinkUuid)
+	if !indb {
+		log.Printf("HeLink does not exists: %v", req.HELinkUuid)
+		http.Error(w, "HeLink does not exists", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	heuuid, err := uuid.NewUUID()
 	if err != nil {
@@ -86,7 +97,13 @@ func homeworks_post(w http.ResponseWriter, r *http.Request){
 		},
 		HEStatusUnsubmitted}
 
-	//TODO: Add HE to database
+	//add he
+	err = env.db.AddHe(data)
+	if err != nil {
+		log.Printf("Error: could not connect to db")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	res, err := json.Marshal(data)
 	if err != nil {
