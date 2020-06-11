@@ -1,22 +1,25 @@
-DROP TABLE IF EXISTS HE;
-DROP TABLE IF EXISTS HELink;
 DROP TABLE IF EXISTS File;
+DROP TABLE IF EXISTS Submission;
+DROP TABLE IF EXISTS Link;
 
 create table Link (
-    HELinkUuid uuid primary key
+    HELinkUuid uuid primary key,
+    created TIMESTAMP DEFAULT now()
 );
 
 create table Submission (
 	LinkUuid uuid references Link,
 	SubmissionUuid uuid primary key,
 	fname text,
-    lname text
+    lname text,
+    created TIMESTAMP DEFAULT now()
 );
 
 create table File (
     SubmissionUuid uuid primary key REFERENCES Submission (SubmissionUuid),
     Text text,
-    status text
+    status text,
+    created TIMESTAMP DEFAULT now()
 );
 
 
