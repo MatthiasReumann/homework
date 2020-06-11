@@ -3,12 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	goqu "github.com/doug-martin/goqu"
 
 	_ "github.com/lib/pq"
 )
 
-type databaseConnection struct {
+type databaseConnection struct{
 	conn *sql.DB
 }
 
@@ -35,27 +34,28 @@ func (db *databaseConnection) Close() error { // func not necessary
 	return db.conn.Close()
 }
 
-func (db *databaseConnection) AddHe(he Submission) error {
-
-
-	/*ds := goqu.Insert("HE").
-		Cols("HELinkUuid", "HeUuid", "fname", "lname", "file", "status").
-		Vals(
-			goqu.Vals{he.Link.Uuid, he.Uuid, he.Student.Firstname,
-				he.Student.Lastname, he.File.Text, he.File.Status},
-		)*/
-	//sqlStatement,_,_ := ds.ToSQL()//was dataadsfj
+func (db *databaseConnection) AddSubmission(he Submission) error {
+	sqlStatement := fmt.Sprintf(
+		"insert into Submission (LinkUuid, SubmissionUuid, fname, lname)" +
+			" values ('%s','%s','%s','%s')", he.Link.Uuid, he.Uuid, he.Student.Firstname, he.Student.Lastname)
 	_, err := db.conn.Exec(sqlStatement)
+
+	if err != nil {
+		return err
+	}
+
+	sqlStatement = "insert into file (SubmissionUuid, Text, status) values ($1, $2, $3)"
+	_, err = db.conn.Exec(sqlStatement, he.Uuid, he.File.Text, he.File.Status)
 
 	return err
 }
 
-func (db *databaseConnection) ExistsHe(heUuid string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select heuuid from HE where heuuid = '%s'", heUuid)
+func (db *databaseConnection) ExistsSubmission(Uuid string) (bool, error) {
+	sqlStatement := fmt.Sprintf("select SubmissionUuid from Submission where SubmissionUuid = '%s'", Uuid)
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&heUuid); err {
+	switch err := row.Scan(&Uuid); err {
 	case sql.ErrNoRows:
 		return false, nil
 	case nil:
@@ -65,20 +65,20 @@ func (db *databaseConnection) ExistsHe(heUuid string) (bool, error) {
 	}
 }
 
-func (db *databaseConnection) AddHelink(helink string) error {
-	sqlStatement := fmt.Sprintf("insert into HELink (HELinkUuid) values ('%s')", helink)
+func (db *databaseConnection) AddLink(linkUuid string) error {
+	sqlStatement := fmt.Sprintf("insert into Link (HELinkUuid) values ('%s')", linkUuid)
 
 	_, err := db.conn.Exec(sqlStatement)
 
 	return err
 }
 
-func (db *databaseConnection) ExistsHelink(helink string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select HELinkUuid from HELink where HELinkUuid = '%s'", helink)
+func (db *databaseConnection) ExistsLink(linkUuid string) (bool, error) {
+	sqlStatement := fmt.Sprintf("select HELinkUuid from Link where HELinkUuid = '%s'", linkUuid)
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&helink); err {
+	switch err := row.Scan(&linkUuid); err {
 	case sql.ErrNoRows:
 		return false, nil
 	case nil:
@@ -88,24 +88,26 @@ func (db *databaseConnection) ExistsHelink(helink string) (bool, error) {
 	}
 }
 
-func (db *databaseConnection) GetFile(heUuid string) (string, error) {
-	var file string
-	sqlStatement := fmt.Sprintf("select file from HE where HeUuid = '%s'", heUuid)
+func (db *databaseConnection) GetFile(submissionUuid string) (File, error) {
+	var file File
+	sqlStatement := fmt.Sprintf("select Text, status from File where SubmissionUuid = '%s'", submissionUuid)
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&file); err {
+	switch err := row.Scan(&file.Text, &file.Status); err {
 	case nil:
 		return file, nil
 	default:
-		return "", err
+		return File{}, err
 	}
 }
 
-func (db *databaseConnection) SetFile(heUuid string, text string) error {
-	sqlStatement := "UPDATE HE SET file = $2 WHERE heuuid = $1;"
+func (db *databaseConnection) SetFile(submissionUuid string, file File) error {
+	sqlStatement := "UPDATE File SET Text = $1, status = $2 WHERE SubmissionUuid = $3;"
 
-	_, err := db.conn.Exec(sqlStatement, heUuid, text)
+	_, err := db.conn.Exec(sqlStatement, file.Text, file.Status, submissionUuid)
 
 	return err
 }
+
+

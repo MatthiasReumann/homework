@@ -68,7 +68,7 @@ func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//check if helink in db
-	indb,err := env.db.ExistsHelink(req.Uuid)
+	indb,err := env.db.ExistsLink(req.Uuid)
 	if !indb {
 		log.Printf("HeLink does not exists: %v", req.Uuid)
 		http.Error(w, "HeLink does not exists", http.StatusNotFound)
@@ -98,7 +98,7 @@ func (s *server) homeworks_post(w http.ResponseWriter, r *http.Request) {
 			HEStatusUnsubmitted}}
 
 	//add he
-	err = env.db.AddHe(data)
+	err = env.db.AddSubmission(data)
 	if err != nil {
 		log.Printf("Error: could not connect to db")
 		http.Error(w, err.Error(), http.StatusBadRequest)

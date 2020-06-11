@@ -28,7 +28,7 @@ func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 		data := Link{uuid.String()}
 
 		// add link to db
-		err = env.db.AddHelink(data.Uuid)
+		err = env.db.AddLink(data.Uuid)
 		if err != nil {
 			log.Printf("Error: could not connect to db")
 			http.Error(w, err.Error(), http.StatusBadRequest)
