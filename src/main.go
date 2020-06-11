@@ -8,10 +8,10 @@ type Env struct {
 
 var env *Env
 
-func main(){
-	db, err := NewDatabaseConnection("localhost", 5432, "homeexercise","homeexercise", "he")
+func main() {
+	db, err := NewDatabaseConnection("localhost", 5432, "homeexercise", "homeexercise", "he")
 
-	env =  &Env{db} // temporarily
+	env = &Env{db} // temporarily
 
 	if err != nil {
 		panic(err.Error())
@@ -23,6 +23,5 @@ func main(){
 
 	srv := NewServer("3333")
 	srv.Serve()
-
 
 }

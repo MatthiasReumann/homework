@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	goqu "github.com/doug-martin/goqu"
 
 	_ "github.com/lib/pq"
 )
 
-type databaseConnection struct{
+type databaseConnection struct {
 	conn *sql.DB
 }
 
@@ -35,11 +36,15 @@ func (db *databaseConnection) Close() error { // func not necessary
 }
 
 func (db *databaseConnection) AddHe(he Submission) error {
-	sqlStatement := fmt.Sprintf(
-		"insert into HE (HELinkUuid, HeUuid, fname, lname, file, status)" +
-			" values ('%s','%s','%s','%s','%s','%s')", he.Link.Uuid, he.Uuid, he.Student.Firstname, he.Student.Lastname,
-			he.File.Text, he.File.Status)
 
+
+	/*ds := goqu.Insert("HE").
+		Cols("HELinkUuid", "HeUuid", "fname", "lname", "file", "status").
+		Vals(
+			goqu.Vals{he.Link.Uuid, he.Uuid, he.Student.Firstname,
+				he.Student.Lastname, he.File.Text, he.File.Status},
+		)*/
+	//sqlStatement,_,_ := ds.ToSQL()//was dataadsfj
 	_, err := db.conn.Exec(sqlStatement)
 
 	return err
@@ -104,5 +109,3 @@ func (db *databaseConnection) SetFile(heUuid string, text string) error {
 
 	return err
 }
-
-
