@@ -1,26 +1,22 @@
 DROP TABLE IF EXISTS HE;
-DROP TABLE IF EXISTS File;
 DROP TABLE IF EXISTS HELink;
+DROP TABLE IF EXISTS File;
 
-
-create table HELink (
+create table Link (
     HELinkUuid uuid primary key
 );
 
-create table File (
-    id serial primary key,
-    Text text,
-    status text
+create table Submission (
+	LinkUuid uuid references Link,
+	SubmissionUuid uuid primary key,
+	fname text,
+    lname text
 );
 
-create table HE (
-	HELinkUuid uuid references HELink,
-	HeUuid uuid,
-	fname text,
-    lname text,
-	file serial REFERENCES File,
-	status text,
-    primary key (HELinkUuid, HeUuid)
+create table File (
+    SubmissionUuid uuid primary key REFERENCES Submission (SubmissionUuid),
+    Text text,
+    status text
 );
 
 
