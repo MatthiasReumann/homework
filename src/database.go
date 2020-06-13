@@ -3,11 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
+	"github.com/doug-martin/goqu/v9"
 	_ "github.com/lib/pq"
 )
 
-type databaseConnection struct{
+type databaseConnection struct {
 	conn *sql.DB
 }
 
@@ -35,23 +35,33 @@ func (db *databaseConnection) Close() error { // func not necessary
 }
 
 func (db *databaseConnection) AddSubmission(he Submission) error {
-	sqlStatement := fmt.Sprintf(
-		"insert into Submission (LinkUuid, SubmissionUuid, fname, lname)" +
-			" values ('%s','%s','%s','%s')", he.Link.Uuid, he.Uuid, he.Student.Firstname, he.Student.Lastname)
+	ds := goqu.Insert("submission").Rows(
+		goqu.Record{"linkuuid": he.Link.Uuid, "submissionuuid": he.Uuid,
+			"fname": he.Student.Firstname, "lname": he.Student.Lastname},
+	)
+
+	sqlStatement, _, _ := ds.ToSQL()
 	_, err := db.conn.Exec(sqlStatement)
 
 	if err != nil {
 		return err
 	}
 
-	sqlStatement = "insert into file (SubmissionUuid, Text, status) values ($1, $2, $3)"
-	_, err = db.conn.Exec(sqlStatement, he.Uuid, he.File.Text, he.File.Status)
+	ds = goqu.Insert("file").Rows(
+		goqu.Record{"submissionuuid": he.Uuid, "text": he.File.Text,
+			"status": he.File.Status},
+	)
+
+	sqlStatement, _, _ = ds.ToSQL()
+	_, err = db.conn.Exec(sqlStatement)
 
 	return err
 }
 
 func (db *databaseConnection) ExistsSubmission(Uuid string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select SubmissionUuid from Submission where SubmissionUuid = '%s'", Uuid)
+	sqlStatement, _, _ := goqu.From("submission").Select("submissionuuid").Where(
+		goqu.C("submissionuuid").Eq(Uuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
@@ -66,7 +76,9 @@ func (db *databaseConnection) ExistsSubmission(Uuid string) (bool, error) {
 }
 
 func (db *databaseConnection) AddLink(linkUuid string) error {
-	sqlStatement := fmt.Sprintf("insert into Link (HELinkUuid) values ('%s')", linkUuid)
+	sqlStatement, _, _ := goqu.Insert("link").Rows(
+		goqu.Record{"helinkuuid": linkUuid},
+	).ToSQL()
 
 	_, err := db.conn.Exec(sqlStatement)
 
@@ -74,7 +86,9 @@ func (db *databaseConnection) AddLink(linkUuid string) error {
 }
 
 func (db *databaseConnection) ExistsLink(linkUuid string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select HELinkUuid from Link where HELinkUuid = '%s'", linkUuid)
+	sqlStatement, _, _ := goqu.From("link").Select("helinkuuid").Where(
+		goqu.C("helinkuuid").Eq(linkUuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
@@ -90,7 +104,9 @@ func (db *databaseConnection) ExistsLink(linkUuid string) (bool, error) {
 
 func (db *databaseConnection) GetFile(submissionUuid string) (File, error) {
 	var file File
-	sqlStatement := fmt.Sprintf("select Text, status from File where SubmissionUuid = '%s'", submissionUuid)
+	sqlStatement, _, _ := goqu.From("file").Select("text", "status").Where(
+		goqu.C("submissionuuid").Eq(submissionUuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
@@ -103,11 +119,11 @@ func (db *databaseConnection) GetFile(submissionUuid string) (File, error) {
 }
 
 func (db *databaseConnection) SetFile(submissionUuid string, file File) error {
-	sqlStatement := "UPDATE File SET Text = $1, status = $2 WHERE SubmissionUuid = $3;"
+	sqlStatement, _, _ := goqu.From("file").Where(goqu.C("submissionuuid").Eq(submissionUuid)).Update().Set(
+		goqu.Record{"text": file.Text, "status": file.Status},
+	).ToSQL()
 
-	_, err := db.conn.Exec(sqlStatement, file.Text, file.Status, submissionUuid)
+	_, err := db.conn.Exec(sqlStatement)
 
 	return err
 }
-
-
