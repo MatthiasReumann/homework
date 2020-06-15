@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	uuid2 "github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -12,14 +13,21 @@ type Link struct {
 	Uuid string
 }
 
-type List struct{
-	Link Link
+type List struct {
+	Link        Link
 	Submissions []string
 }
 
 func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading body: %v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		uuid, err := uuid2.NewUUID()
 		if err != nil {
 			log.Fatal(err)
@@ -28,7 +36,7 @@ func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 		data := Link{uuid.String()}
 
 		// add link to db
-		err = env.db.AddLink(data.Uuid)
+		err = env.db.AddLink(data.Uuid, body)
 		if err != nil {
 			log.Printf("Error: could not connect to db")
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -44,7 +52,7 @@ func (s *server) Links(w http.ResponseWriter, r *http.Request) {
 
 		w.Write(res)
 	case http.MethodOptions:
-		w.WriteHeader(http.StatusOK);
+		w.WriteHeader(http.StatusOK)
 	default:
 		s.MethodNotAllowed(w)
 	}
@@ -59,7 +67,7 @@ func (s *server) LinksUUID(w http.ResponseWriter, r *http.Request) {
 
 		//TODO: Get all homework uuids via link
 
-		helist := []string{"1","3","3"}
+		helist := []string{"1", "3", "3"}
 
 		data := List{Link{uuid}, helist}
 
@@ -72,9 +80,8 @@ func (s *server) LinksUUID(w http.ResponseWriter, r *http.Request) {
 
 		w.Write(res)
 	case http.MethodOptions:
-		w.WriteHeader(http.StatusOK);
+		w.WriteHeader(http.StatusOK)
 	default:
 		s.MethodNotAllowed(w)
 	}
 }
-

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	_ "github.com/lib/pq"
 )
 
@@ -75,12 +76,12 @@ func (db *databaseConnection) ExistsSubmission(Uuid string) (bool, error) {
 	}
 }
 
-func (db *databaseConnection) AddLink(linkUuid string) error {
-	sqlStatement, _, _ := goqu.Insert("link").Rows(
-		goqu.Record{"helinkuuid": linkUuid},
-	).ToSQL()
+func (db *databaseConnection) AddLink(linkUuid string, task []byte) error {
+	// goqu can't insert binary data
 
-	_, err := db.conn.Exec(sqlStatement)
+	sqlStatement := "INSERT INTO \"link\" (\"helinkuuid\", \"task\") VALUES ($1, $2)"
+
+	_, err := db.conn.Exec(sqlStatement, linkUuid, task) // no sql injection possible
 
 	return err
 }

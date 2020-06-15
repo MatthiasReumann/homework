@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS Link;
 
 create table Link (
     HELinkUuid uuid primary key,
+    Task bytea,
     created TIMESTAMP DEFAULT now()
 );
 
