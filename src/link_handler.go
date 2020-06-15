@@ -65,9 +65,14 @@ func (s *server) LinksUUID(w http.ResponseWriter, r *http.Request) {
 		uuid := vars["uuid"]
 		log.Print(uuid)
 
-		//TODO: Get all homework uuids via link
+		//Get all homework uuids via link
+		helist, err := env.db.GetSubmissions(uuid)
 
-		helist := []string{"1", "3", "3"}
+		if err != nil {
+			log.Printf("Error while executing query: %v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		data := List{Link{uuid}, helist}
 

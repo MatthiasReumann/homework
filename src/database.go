@@ -35,6 +35,36 @@ func (db *databaseConnection) Close() error { // func not necessary
 	return db.conn.Close()
 }
 
+func (db *databaseConnection) GetSubmissions(linkUuid string) ([]string, error) {
+	var subs = make([]string,4)
+	sqlStatement, _, _ := goqu.From("submission").Select("submissionuuid").Where(
+		goqu.C("linkuuid").Eq(linkUuid),
+	).ToSQL()
+
+	rows, err := db.conn.Query(sqlStatement)
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var sub string
+		err = rows.Scan(&sub)
+		if err != nil {
+			return []string{}, err
+		}
+		subs = append(subs, sub)
+	}
+	// get any error encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		return []string{}, err
+	}
+
+	return subs, nil
+}
+
 func (db *databaseConnection) AddSubmission(he Submission) error {
 	ds := goqu.Insert("submission").Rows(
 		goqu.Record{"linkuuid": he.Link.Uuid, "submissionuuid": he.Uuid,
