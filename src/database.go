@@ -31,12 +31,12 @@ func NewDatabaseConnection(host string, port int, user string, password string, 
 	return databaseConnection{db}, nil
 }
 
-func (db *databaseConnection) Close() error { // func not necessary
+func (db *databaseConnection) Close() error {
 	return db.conn.Close()
 }
 
 func (db *databaseConnection) GetSubmissions(linkUuid string) ([]string, error) {
-	var subs = make([]string,4)
+	var subs = make([]string,0)
 	sqlStatement, _, _ := goqu.From("submission").Select("submissionuuid").Where(
 		goqu.C("linkuuid").Eq(linkUuid),
 	).ToSQL()
