@@ -30,7 +30,7 @@ func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 	log.Print(heuuid)
 
 	//check if he exists
-	indb,err := s.db.ExistsHe(heuuid)
+	indb,err := s.db.ExistsSubmission(heuuid)
 	if !indb {
 		log.Printf("HE does not exists: %v", heuuid)
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -43,11 +43,7 @@ func (s *server) homeworkuuid_get(w http.ResponseWriter, r *http.Request){
 	}
 
 	//get file
-	text,_ := s.db.GetFile(heuuid)
-	file := File{
-		text,
-		HEStatusUnsubmitted,
-	}
+	file,_ := s.db.GetFile(heuuid)
 
 	if err != nil {
 		log.Printf("Error: could not connect to db")
@@ -70,9 +66,10 @@ func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 	heuuid := vars["uuid"]
 
 	//check if he exists
-	indb,err := s.db.ExistsHe(heuuid)
+	indb,err := s.db.ExistsSubmission(heuuid)
 	if !indb {
 		log.Printf("HE does not exists: %v", heuuid)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 	if err != nil {
@@ -98,7 +95,7 @@ func (s *server) homeworkuuid_put(w http.ResponseWriter, r *http.Request){
 	}
 
 	//check if file exists
-	err = s.db.SetFile(heuuid, req.Text)
+	err = s.db.SetFile(heuuid, req)
 	if err != nil {
 		log.Printf("Error: could not connect to db")
 		http.Error(w, err.Error(), http.StatusNotFound)

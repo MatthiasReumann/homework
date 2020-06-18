@@ -3,12 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"log"
-
 	_ "github.com/lib/pq"
 )
 
-type databaseConnection struct{
+type databaseConnection struct {
 	conn *sql.DB
 }
 
@@ -33,27 +34,72 @@ func NewDatabaseConnection(host string, port int, user string, password string, 
 	return databaseConnection{db}, nil
 }
 
-func (db *databaseConnection) Close() error { // func not necessary
+func (db *databaseConnection) Close() error {
 	return db.conn.Close()
 }
 
-func (db *databaseConnection) AddHe(he Submission) error {
-	sqlStatement := fmt.Sprintf(
-		"insert into HE (HELinkUuid, HeUuid, fname, lname, file, status)" +
-			" values ('%s','%s','%s','%s','%s','%s')", he.Link.Uuid, he.Uuid, he.Student.Firstname, he.Student.Lastname,
-			he.File.Text, he.File.Status)
+func (db *databaseConnection) GetSubmissions(linkUuid string) ([]string, error) {
+	var subs = make([]string,0)
+	sqlStatement, _, _ := goqu.From("submission").Select("submissionuuid").Where(
+		goqu.C("linkuuid").Eq(linkUuid),
+	).ToSQL()
 
+	rows, err := db.conn.Query(sqlStatement)
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var sub string
+		err = rows.Scan(&sub)
+		if err != nil {
+			return []string{}, err
+		}
+		subs = append(subs, sub)
+	}
+	// get any error encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		return []string{}, err
+	}
+
+	return subs, nil
+}
+
+func (db *databaseConnection) AddSubmission(he Submission) error {
+	ds := goqu.Insert("submission").Rows(
+		goqu.Record{"linkuuid": he.Link.Uuid, "submissionuuid": he.Uuid,
+			"fname": he.Student.Firstname, "lname": he.Student.Lastname},
+	)
+
+	sqlStatement, _, _ := ds.ToSQL()
 	_, err := db.conn.Exec(sqlStatement)
+
+	if err != nil {
+		return err
+	}
+
+	ds = goqu.Insert("file").Rows(
+		goqu.Record{"submissionuuid": he.Uuid, "text": he.File.Text,
+			"status": he.File.Status},
+	)
+
+	sqlStatement, _, _ = ds.ToSQL()
+	_, err = db.conn.Exec(sqlStatement)
 
 	return err
 }
 
-func (db *databaseConnection) ExistsHe(heUuid string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select heuuid from HE where heuuid = '%s'", heUuid)
+func (db *databaseConnection) ExistsSubmission(Uuid string) (bool, error) {
+	sqlStatement, _, _ := goqu.From("submission").Select("submissionuuid").Where(
+		goqu.C("submissionuuid").Eq(Uuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&heUuid); err {
+	switch err := row.Scan(&Uuid); err {
 	case sql.ErrNoRows:
 		return false, nil
 	case nil:
@@ -63,20 +109,24 @@ func (db *databaseConnection) ExistsHe(heUuid string) (bool, error) {
 	}
 }
 
-func (db *databaseConnection) AddHelink(helink string) error {
-	sqlStatement := fmt.Sprintf("insert into HELink (HELinkUuid) values ('%s')", helink)
+func (db *databaseConnection) AddLink(linkUuid string, task []byte) error {
+	// goqu can't insert binary data
 
-	_, err := db.conn.Exec(sqlStatement)
+	sqlStatement := "INSERT INTO \"link\" (\"helinkuuid\", \"task\") VALUES ($1, $2)"
+
+	_, err := db.conn.Exec(sqlStatement, linkUuid, task) // no sql injection possible
 
 	return err
 }
 
-func (db *databaseConnection) ExistsHelink(helink string) (bool, error) {
-	sqlStatement := fmt.Sprintf("select HELinkUuid from HELink where HELinkUuid = '%s'", helink)
+func (db *databaseConnection) ExistsLink(linkUuid string) (bool, error) {
+	sqlStatement, _, _ := goqu.From("link").Select("helinkuuid").Where(
+		goqu.C("helinkuuid").Eq(linkUuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&helink); err {
+	switch err := row.Scan(&linkUuid); err {
 	case sql.ErrNoRows:
 		return false, nil
 	case nil:
@@ -86,26 +136,28 @@ func (db *databaseConnection) ExistsHelink(helink string) (bool, error) {
 	}
 }
 
-func (db *databaseConnection) GetFile(heUuid string) (string, error) {
-	var file string
-	sqlStatement := fmt.Sprintf("select file from HE where HeUuid = '%s'", heUuid)
+func (db *databaseConnection) GetFile(submissionUuid string) (File, error) {
+	var file File
+	sqlStatement, _, _ := goqu.From("file").Select("text", "status").Where(
+		goqu.C("submissionuuid").Eq(submissionUuid),
+	).ToSQL()
 
 	row := db.conn.QueryRow(sqlStatement)
 
-	switch err := row.Scan(&file); err {
+	switch err := row.Scan(&file.Text, &file.Status); err {
 	case nil:
 		return file, nil
 	default:
-		return "", err
+		return File{}, err
 	}
 }
 
-func (db *databaseConnection) SetFile(heUuid string, text string) error {
-	sqlStatement := "UPDATE HE SET file = $2 WHERE heuuid = $1;"
+func (db *databaseConnection) SetFile(submissionUuid string, file File) error {
+	sqlStatement, _, _ := goqu.From("file").Where(goqu.C("submissionuuid").Eq(submissionUuid)).Update().Set(
+		goqu.Record{"text": file.Text, "status": file.Status},
+	).ToSQL()
 
-	_, err := db.conn.Exec(sqlStatement, heUuid, text)
+	_, err := db.conn.Exec(sqlStatement)
 
 	return err
 }
-
-
