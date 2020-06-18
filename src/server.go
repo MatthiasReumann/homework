@@ -7,24 +7,25 @@ import (
 )
 
 type server struct {
-	srv *http.Server
+	httpServer *http.Server
+	db *databaseConnection
 }
 
-func NewServer(port string) server {
+func NewServer(port string, db *databaseConnection) server {
 	srv := &http.Server{
 		Addr:           ":" + port,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	return server{srv}
+	return server{srv, db}
 }
 
 func (s *server) Serve() {
-	log.Printf("Listen at %s\n", s.srv.Addr)
-	s.srv.Handler = s.NewRouter()
+	log.Printf("Listen at %s\n", s.httpServer.Addr)
+	s.httpServer.Handler = s.NewRouter()
 
-	err := s.srv.ListenAndServe()
+	err := s.httpServer.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}

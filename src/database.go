@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	_ "github.com/lib/pq"
 )
@@ -26,6 +27,8 @@ func NewDatabaseConnection(host string, port int, user string, password string, 
 	if err != nil {
 		return databaseConnection{}, err
 	}
+
+	log.Printf("Successfully connected to database: %s:%d | db: %s\n | user: %s", host, port, dbname, user)
 
 	return databaseConnection{db}, nil
 }
