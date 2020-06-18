@@ -12,7 +12,7 @@ func main() {
 
 	defer db.Close()
 
-	srv := NewServer("3333")
+	srv := NewServer("3333", &db)
 	srv.Serve()
 
 

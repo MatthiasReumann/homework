@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/doug-martin/goqu/v9"
-	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	"github.com/doug-martin/goqu"
+	_ "github.com/doug-martin/goqu/dialect/postgres"
 	"log"
 	_ "github.com/lib/pq"
 )
